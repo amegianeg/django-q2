@@ -1,8 +1,10 @@
+import copy
+
 from boto3 import Session
 from botocore.client import ClientError
 
 from django_q.brokers import Broker
-from django_q.conf import Conf
+from django_q.conf import Conf, logger
 
 QUEUE_DOES_NOT_EXIST = "AWS.SimpleQueueService.NonExistentQueue"
 
@@ -78,15 +80,15 @@ class Sqs(Broker):
 
     @staticmethod
     def get_connection(list_key: str = None) -> Session:
-        config = Conf.SQS
-        if "aws_region" in config:
-            config["region_name"] = config["aws_region"]
-            del config["aws_region"]
+        config_cloned = copy.deepcopy(Conf.SQS)
+        if "aws_region" in config_cloned:
+            config_cloned["region_name"] = config_cloned["aws_region"]
+            del config_cloned["aws_region"]
 
-        if "receive_message_wait_time_seconds" in config:
-            del config["receive_message_wait_time_seconds"]
+        if "receive_message_wait_time_seconds" in config_cloned:
+            del config_cloned["receive_message_wait_time_seconds"]
 
-        return Session(**config)
+        return Session(**config_cloned)
 
     def get_queue(self):
         self.sqs = self.connection.resource("sqs")
